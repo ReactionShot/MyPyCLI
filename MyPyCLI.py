@@ -1,26 +1,22 @@
-# INF360 - Programming in Python
-# Drew McLaughlin
-# Final Project Assignment
+'''
+You need to install the following libraries for this program to work correctly.  The rest of the libraries should already come pre-installed with python.
+pip3 install cryptography
+pip3 install pyperclip
+'''
 
-import base64, json, os, pyperclip, random, string, sys
+import base64, json, logging, os, pyperclip, random, string, sys
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+'''
+Removing the csv and tkinter libraries since I disabled a function that I didn't want to risk for the final project.
 import csv
-import logging
 import tkinter as tk
 from tkinter import messagebox, filedialog
+'''
 
-logging.basicConfig(filename='Final Assignment - Drew McLaughlin.txt', level=logging.DEBUG, format='%(asctime)s -  %(levelname)s -  %(message)s')
-
-"""
-My personal goal for this midterm program was to learn more about actually implementing cryptography.  I spent over 100 hours working on this from scratch and I had to completely rewrite everything multiple times while I was learning how to implement cryptography because I misunderstood some key concepts and probably still do.  I set out with a couple of goals listed below.
-    1. I want to have the user enter a master password and I want the master password to be used to "login" or decrypt the vault.
-    2. I want the user to be able to generate passwords instead of typing them in manually, but I also wanted them to be able to type them in manually if preferred.
-    3. I want the user to be able to copy usernames and passwords to the clipboard.
-    4. I want all of the data encrypted while the program is not being used.
-There is still a lot to work on, but I am happy with where it's at right now.  In the future I plan on adding new fields, such as a URL, and I may implement a GUI via a library, but I'm not sure how much time that would require.  The majority of my time spent on this program was testing it for any possible errors (mainly input errors and intentional tampering with files).
-"""
+logging.basicConfig(filename='Final Project - Logging.txt', level=logging.DEBUG, format='%(asctime)s -  %(levelname)s -  %(message)s')
 
 # This function is used to copy the title, username, or password from a password entry.
 def copy_password(cipher_suite, vault_string):
@@ -56,6 +52,7 @@ def copy_password(cipher_suite, vault_string):
             # If the user's selection is not 0 then set the vault_passwords_dict_key string equal to the password entry title so we can reference the password entry.
             try:
                 vault_passwords_dict_key = temp_dict[select_entry]
+                logging.info("User entered a value of '" + str(select_entry) + "' for their copy password entry.")
                 break
             # If the user's selection does not exist in the dictionary then we need to have the user try again with a valid value.
             except KeyError:
@@ -274,7 +271,6 @@ def delete_password(cipher_suite, vault_string):
             print("0. Cancel Deletion")
             # The select_entry variable is the integer that is entered by the user.
             select_entry = input("> ")
-            logging.info("User entered a value of " + str(select_entry) + " for their delete password entry.")
             print("")
             # If the user enters 0 then quit the function.
             if select_entry == "0":
@@ -284,6 +280,7 @@ def delete_password(cipher_suite, vault_string):
             try:
                 # The vault_passwords_dict_key string saves the password entry title from above, which will be used as a nested dictionary key later.
                 vault_passwords_dict_key = temp_dict[select_entry]
+                logging.info("User entered a value of " + str(select_entry) + " for their delete password entry.")
                 break
             except KeyError:
                 print("Please enter a valid value.")
@@ -367,6 +364,9 @@ def fnf_error():
     logging.warning("The user attempted to open the password vault, but vault.bin does not exist.")
     logging.debug("File Not Found function completed successfully.")
     return
+
+'''
+I originally added this function to add enhancements from the midterm version, but I don't want to risk losing points since my comments for the midterm were to just add logging.
 
 # This function is used to import password entries.
 def import_password(cipher_suite, vault_string):
@@ -483,6 +483,7 @@ def import_password(cipher_suite, vault_string):
         logging.error("The user attempted to import " + str(filename) + ", but was in an invalid format or it was missing the correct headings.")
         logging.debug("Import Password function completed with errors.")
         return
+'''
 
 # This function is used to determine if a password vault has no password entries.
 def is_vault_empty(vault_passwords):
@@ -711,7 +712,10 @@ def open_vault():
                 if password_counter > 0:
                     print('Your Master Password is incorrect.  Please try entering your password again.  You have ' + str(password_counter) + ' attempt(s) remaining.')
                     print("")
-                    logging.warning("The Master Password has been entered incorrectly.  There are "+ str(password_counter) + " attempt(s) remaining.")
+                    if password_counter != 1:
+                        logging.warning("The Master Password has been entered incorrectly.  There are "+ str(password_counter) + " attempts remaining.")
+                    elif password_counter == 1:
+                        logging.warning("The Master Password has been entered incorrectly.  There is "+ str(password_counter) + " attempt remaining.")
                     password_counter -= 1
                     continue
                 else:
@@ -732,8 +736,8 @@ def open_vault():
             print("3. Modify a password entry")
             print("4. Delete a password entry")
             print("5. Copy a password to your clipboard")
-            print("6. Import Password Entries")
-            print("7. Log Out")
+            #print("6. Import Password Entries")
+            print("6. Log Out")
             print("0. Exit program!")
             # Saves the user's input to the vault_menu_choice string.
             vault_menu_choice = input("> ")
@@ -761,10 +765,11 @@ def open_vault():
             elif vault_menu_choice == '5':
                 # The cipher suite is used to decrypt the vault_string variable so we can copy the passwords.
                 copy_password(cipher_suite, vault_string)
-            elif vault_menu_choice == '6':
+            # This function works, but I'm disabling it because I don't want to risk the chance that it doesn't work.
+            #elif vault_menu_choice == '6':
                 # The cipher suite is used to decrypt the vault_string variable so we can copy the passwords.
-                import_password(cipher_suite, vault_string)
-            elif vault_menu_choice == '7':
+                #import_password(cipher_suite, vault_string)
+            elif vault_menu_choice == '6':
                 # When logging out the clipboard is cleared and the following variables are set to None.
                 pyperclip.copy("")
                 cipher_suite, password, vault_string, salt_string = None, None, None, None
@@ -878,34 +883,39 @@ def vault_to_strings():
 banner = '*' * 82
 
 # Password Manager Main Menu
+logging.info("User started the program.")
 while True:
-    # Creates the vault_exists boolean flag to determine whether or not the vault exists.
-    vault_exists = False
-    print("Welcome To Your New Password Manager!")
-    print("Please select an option to proceed:")
-    print("1. Create a new password vault")
-    # Only print the open vault option if a password vault has already been created.  If the vault.bin file is found then set the vault_exists flag to True.
-    if os.path.exists('vault.bin'):
-        print("2. Open an existing password vault")
-        vault_exists = True
-    print("0. Exit program!")
-    main_menu_choice = input("> ")
-    logging.info("User entered a value of '" + str(main_menu_choice + "' at the main menu."))
-    print("")
-    # If the user's input is 0 then exit the program completely.  We do not need to clear the clipboard or change any variables since that is already done in the open_vault function (if the vault is opened).
-    if main_menu_choice == '0':
-        logging.info("User exited the program.")
-        print("Exiting the program.")
-        sys.exit()
-    # Send the user to the create vault function.
-    elif main_menu_choice == '1':
-        create_vault()
-    # Send the user to the open vault function if the vault exists.
-    elif main_menu_choice == '2' and vault_exists:
-        open_vault()
-    # Ensure that the user selects a valid menu option.
-    else:
-        print("Please enter a valid value.")
+    try:
+        # Creates the vault_exists boolean flag to determine whether or not the vault exists.
+        vault_exists = False
+        print("Welcome To Your New Password Manager!")
+        print("Please select an option to proceed:")
+        print("1. Create a new password vault")
+        # Only print the open vault option if a password vault has already been created.  If the vault.bin file is found then set the vault_exists flag to True.
+        if os.path.exists('vault.bin'):
+            print("2. Open an existing password vault")
+            vault_exists = True
+        print("0. Exit program!")
+        main_menu_choice = input("> ")
+        logging.info("User entered a value of '" + str(main_menu_choice + "' at the main menu."))
         print("")
-        logging.warning("User entered an invalid value of '" + str(main_menu_choice) + "' at the main menu.")
-        continue
+        # If the user's input is 0 then exit the program completely.  We do not need to clear the clipboard or change any variables since that is already done in the open_vault function (if the vault is opened).
+        if main_menu_choice == '0':
+            logging.info("User exited the program.")
+            print("Exiting the program.")
+            sys.exit()
+        # Send the user to the create vault function.
+        elif main_menu_choice == '1':
+            create_vault()
+        # Send the user to the open vault function if the vault exists.
+        elif main_menu_choice == '2' and vault_exists:
+            open_vault()
+        # Ensure that the user selects a valid menu option.
+        else:
+            print("Please enter a valid value.")
+            print("")
+            logging.warning("User entered an invalid value of '" + str(main_menu_choice) + "' at the main menu.")
+            continue
+    except KeyboardInterrupt:
+        logging.critical("User pressed Ctrl+C to exit the program.")
+        sys.exit()
